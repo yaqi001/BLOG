@@ -21,7 +21,9 @@
 
 #### [Ceph Block Device](http://docs.ceph.com/docs/master/rbd/rbd/)：块就是一个字节序列（例如，一个 512 字节的数据块）。那么基于块的存储接口就是用传统的旋转存储接口（例如：硬盘，CD，软盘甚至是传统 9-track 磁带）存储数据最常见的方式。块设备的普遍存在使得一个虚拟块设备成为能够与像 Ceph 这样的大量数据存储系统进行通信的最佳候选者。Ceph 块设备是精简配置的，Ceph 块设备利用 [RADOS](http://docs.ceph.com/docs/giant/man/8/rados/)功能，例如快照，
 
-#### [Ceph Filesystem](http://docs.ceph.com/docs/master/cephfs/)（Ceph FS）是一个兼容了 POSIX 的文件系统，它利用 Ceph Storage Cluster 来存储数据。Ceph 文件系统
+#### [Ceph Filesystem](http://docs.ceph.com/docs/master/cephfs/)（Ceph FS）是一个兼容了 POSIX 的文件系统，它利用 Ceph Storage Cluster 来存储数据。Ceph 文件系统像 Ceph Block Devices 和 Ceph Object Storage 一样使用 Ceph Storage Cluster 和 S3， Swift API 或者本地邦定（librados）。要想使用 Ceph 文件系统，你的 Ceph Storage Cluster 中至少得有一个 [Ceph Metadata Server](http://docs.ceph.com/docs/v0.71/man/8/ceph-mds/)。
+
+* [Ceph Metadata Server](http://docs.ceph.com/docs/v0.71/man/8/ceph-mds/)：MDS，Ceph 元数据软件。MDS 代表 Ceph 文件系统存储了元数据（Ceph Block Devices 和 Ceph Object Storage 则不用 MDS）。Ceph Metadata Server 能够让 POSIX 文件系统用户执行基本命令例如 `ls`，`find` 等，为 Ceph Storage Cluster 减轻了很多负担。
 
 一些术语：
 
