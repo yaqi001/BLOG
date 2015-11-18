@@ -19,7 +19,7 @@
    * **S3-compatible**：兼容了 Amazon S3 RESTful API 的接口提供了对象存储的功能。
    * **Swift-compatible**：兼容了 OpenStack Swift API 的接口提供了对想存储的功能。
 
-#### [Ceph Block Device](http://docs.ceph.com/docs/master/rbd/rbd/)：块就是一个字节序列（例如，一个 512 字节的数据块）。那么基于块的存储接口就是用传统的旋转存储接口（例如：硬盘，CD，软盘甚至是传统 9-track 磁带）存储数据的最常见的方式。块设备的普遍存在使得一个虚拟块设备成为能够与像 Ceph 这样的大量数据存储系统进行通信的最佳候选者。Ceph 块设备是精简配置且可调整大小的，它在一个 Ceph Cluster 上的多个 OSD 上带状数据。Ceph 块设备利用 [RADOS](http://docs.ceph.com/docs/giant/man/8/rados/)功能，例如快照，复制，保证数据一致性。
+#### [Ceph Block Device](http://docs.ceph.com/docs/master/rbd/rbd/)：块就是一个字节序列（例如，一个 512 字节的数据块）。那么基于块的存储接口就是用传统的旋转存储接口（例如：硬盘，CD，软盘甚至是传统 9-track 磁带）存储数据的最常见的方式。块设备的普遍存在使得一个虚拟块设备成为能够与像 Ceph 这样的大量数据存储系统进行通信的最佳候选者。Ceph 块设备是精简配置且可调整大小的，还可以在一个 Ceph Cluster 上的多个 OSD 上存储带状数据。Ceph 块设备利用了 [RADOS](http://docs.ceph.com/docs/giant/man/8/rados/)功能，例如快照，复制，保证数据一致性。Ceph 的 [RADOS] 块设备（RBD）利用内核或者 [librbd] 库来和 OSD 进行通信。
 
 #### [Ceph Filesystem](http://docs.ceph.com/docs/master/cephfs/)（Ceph FS）是一个兼容了 POSIX 的文件系统，它利用 Ceph Storage Cluster 来存储数据。Ceph 文件系统像 Ceph Block Devices 和 Ceph Object Storage 一样使用 Ceph Storage Cluster 和 S3， Swift API 或者本地邦定（librados）。要想使用 Ceph 文件系统，你的 Ceph Storage Cluster 中至少得有一个 [Ceph Metadata Server](http://docs.ceph.com/docs/v0.71/man/8/ceph-mds/)。
 
@@ -36,3 +36,103 @@
 * [rebalancing](http://drbd.linbit.com/users-guide-9.0/s-rebalance-workflow.html)
 * active + clean：
 * [heartbeat](http://linux-ha.org/wiki/Heartbeat)：
+* [data consistency](http://recoveryspecialties.com/dc01.html)：指的是数据的可用性，在单一的环境中它被认为是理所当然存在的。一般在单一环境中进行数据备份（生产数据的副本用在原始数据领域中的时候）的时候会发生 data consistency。
+* []
+
+### 安装
+
+#### Step 1: 准备
+
+操作系统： CentOS 7
+
+| **node 名称** | **IP 地址** |
+| ------------- | ----------- |
+| ceph-deploy-admin-node | 192.168.9.59 |
+| ceph-node1 | 192.168.9.58 |
+| ceph-node2 | 192.168.9.57 |
+| ceph-node3 | 192.168.9.55 |
+
+##### Ceph 部署安装
+
+1. 在 `ceph-deploy` 中添加 Ceph 仓库：
+   ~~~ bash 
+   # cat >/etc/yum.repos.d/ceph.repo <<EOF
+   > [ceph-noarch]
+   > name=Ceph noarch packages
+   > baseurl=http://download.ceph.com/rpm-firefly/el7/noarch
+   > enabled=1
+   > gpgcheck=1
+   > type=rpm-md
+   > gpgkey=https://download.ceph.com/keys/release.asc
+   > EOF
+   ~~~   
+   
+   > **提示：**<br/>
+   > * `firefly` 是 Ceph 的版本名称，你可以修改为最近主要的版本名称，Ceph 的版本信息：[http://ceph.com/category/releases/](http://ceph.com/category/releases/)。
+   > * `el7` 指的是我使用的 Linux 发行版。对应关系如下：
+     <table>
+        <tr>
+           <td>el6</td>
+           <td>CentOS 6</td>
+        </tr>
+        <tr>
+           <td>el7</td>
+           <td>CentOS 7</td>
+        </tr>
+        <tr>
+           <td>rhel6</td>
+           <td>Red Hat 6.5</td>
+        </tr>
+        <tr>
+           <td>rhel7</td>
+           <td>Red Hat 7</td>
+        </tr>
+        <tr>
+           <td>fc19</td>
+           <td>Fedora 19</td>
+        </tr>
+        <tr>
+           <td>fc20</td>
+           <td>Fedora 20</td>
+        </tr>
+     </table>
+
+2. 更新系统，并安装 ceph-deploy 
+   ~~~ bash
+   $ sudo yum -y update
+   $ sudo yum -y install ceph-deploy
+   ~~~ 
+   
+##### Ceph Node 安装
+1. 管理节点，即 `ceph-deploy-admin-node` 需要以无密码 SSH 登录的方式来访问其它 Ceph 节点。如果 ceph-deploy 以某个用户登录到其中一个 Ceph-node 上，那么该用户必须有无密码 sudo 权限。
+   
+   我的用户是：`helen`，所以在 `/etc/sudoers` 下添加下面这行语句，`helen` 用户就有了无密码 sudo 权限了。
+   ~~~ bash
+   helen  ALL=(ALL) NOPASSWD:ALL
+   ~~~
+
+2. 安装 NTP（Network Time Protocol）
+   
+   建议在 Ceph node（尤其是 Ceph 监控节点）上安装 NTP，这样可以避免出现由于时间差异产生的各种问题。
+   ~~~ bash
+   sudo yum -y install ntp ntpdate ntp-doc
+   ~~~
+
+3. 安装 SSH 服务
+   ~~~ bash
+   yum -y install openssh-server
+   systemctl start sshd
+   ~~~
+
+4. 创建用于部署 Ceph 的用户
+   ~~~ bash
+   ~~~
+  
+#### Step 2: 存储集群
+
+##### 创建一个集群
+##### 操作集群
+##### 扩展集群
+##### 存储/获取对象数据
+#### Step 3: Ceph 客户端
+
