@@ -104,30 +104,80 @@
    ~~~ 
    
 ##### Ceph Node 安装
-1. 管理节点，即 `ceph-deploy-admin-node` 需要以无密码 SSH 登录的方式来访问其它 Ceph 节点。如果 ceph-deploy 以某个用户登录到其中一个 Ceph-node 上，那么该用户必须有无密码 sudo 权限。
-   
-   我的用户是：`helen`，所以在 `/etc/sudoers` 下添加下面这行语句，`helen` 用户就有了无密码 sudo 权限了。
-   ~~~ bash
-   helen  ALL=(ALL) NOPASSWD:ALL
-   ~~~
 
-2. 安装 NTP（Network Time Protocol）
+1. 安装 NTP（Network Time Protocol）
    
    建议在 Ceph node（尤其是 Ceph 监控节点）上安装 NTP，这样可以避免出现由于时间差异产生的各种问题。
    ~~~ bash
    sudo yum -y install ntp ntpdate ntp-doc
    ~~~
 
-3. 安装 SSH 服务
+2. 安装 SSH 服务
    ~~~ bash
    yum -y install openssh-server
    systemctl start sshd
    ~~~
 
-4. 创建用于部署 Ceph 的用户
-   ~~~ bash
-   ~~~
+3. 为 `ceph-deploy` 端创建用户
+   `ceph-deploy` 工具必须要以一个无密码 **sudo** 权限的用户登录到其它的 `ceph-node` 端，这是因为 `ceph-deploy` 这个工具需要在无密码提示的情况下安装软件并配置相关文件。
+    
+   最新的 `ceph-deply` 的版本支持 `--username` 选项，所以你完全可以通过指定某个具有无密码 **sudo** 权限的用户（包括 root 用户，即便我们并不支持这么做）对其它 `ceph-node` 进行操作。建议在所有 `ceph-node` 上都创建该用户，这样一来就方便多了，但是最好不要用 `ceph` 作为你指定的用户名称。
+
+   i. 在每个 ceph 节点上都创建一个新用户：
+      我新创建的用户名是 `Ceph`
+      ~~~ bash
+      
+      ~~~
   
+4. 开启无密码 SSH
+   
+   1. 使用你刚刚创建的新用户生成 SSH 密钥，口令设为空：
+      ~~~ bash
+      [Ceph@ceph-deploy-admin-node helen]$ ssh-keygen
+      Generating public/private rsa key pair.
+      Enter file in which to save the key (/home/Ceph/.ssh/id_rsa): 
+      Created directory '/home/Ceph/.ssh'.
+      Enter passphrase (empty for no passphrase): 
+      Enter same passphrase again: 
+      Your identification has been saved in /home/Ceph/.ssh/id_rsa.
+      Your public key has been saved in /home/Ceph/.ssh/id_rsa.pub.
+      The key fingerprint is:
+      41:a6:62:50:7f:79:95:c0:88:55:4e:b8:0f:0d:3f:75 Ceph@ceph-deploy-admin-node
+      The key's randomart image is:
+      +--[ RSA 2048]----+
+      |  ...  o+=+...   |
+      |   . ..+++..o E  |
+      |    o o +=o. .   |
+      |   . . .oo+      |
+      |        So .     |
+      |          .      |
+      |                 |
+      |                 |
+      |                 |
+      +-----------------+
+      ~~~
+   
+   2. 将密钥拷贝到其它三个 Ceph 节点中：
+      ~~~ bash
+      [Ceph@ceph-deploy-admin-node ~]$ ssh-copy-id Ceph@ceph-node1
+      The authenticity of host 'ceph-node1 (192.168.9.58)' can't be established.
+      ECDSA key fingerprint is 49:b1:e8:e6:5a:fb:a9:ac:a1:d0:ae:8a:2b:da:12:f7.
+      Are you sure you want to continue connecting (yes/no)? yes
+      /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+      /usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+      Ceph@ceph-node1's password: 
+
+      Number of key(s) added: 1
+
+      Now try logging into the machine, with:   "ssh 'Ceph@ceph-node1'"
+      and check to make sure that only the key(s) you wanted were added.
+      ~~~
+       
+      ~~~ bash
+      # ceph-node2 和 ceph-node3 同理
+      ssh-copy-id Ceph@ceph-node2
+      ssh-copy-id Ceph@ceph-node3
+      ~~~
 #### Step 2: 存储集群
 
 ##### 创建一个集群
