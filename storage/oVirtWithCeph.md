@@ -126,8 +126,15 @@
    i. 在每个 ceph 节点上都创建一个新用户：
       我新创建的用户名是 `Ceph`
       ~~~ bash
-      
+      $ sudo useradd -d /home/Ceph -m Ceph
+      $ sudo passwd Ceph
       ~~~
+   
+   ii. 为所有 ceph 节点上的新用户添加 `sudo` 权限： 
+       ~~~ bash
+       echo "Ceph ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/Ceph
+       sudo chmod 0440 /etc/sudoers.d/Ceph
+       ~~~
   
 4. 开启无密码 SSH
    
@@ -178,6 +185,7 @@
       ssh-copy-id Ceph@ceph-node2
       ssh-copy-id Ceph@ceph-node3
       ~~~
+
 #### Step 2: 存储集群
 
 ##### 创建一个集群
