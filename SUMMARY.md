@@ -22,4 +22,5 @@
       * [oVirt 与 Cinder 整合](storage/oVirtWithCeph.md)
 * [生活](life/README.md)
    * [计划](life/plan.md)
+   * [书籍](https://yingyun001.gitbooks.io/book/content/)
 
