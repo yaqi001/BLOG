@@ -8,6 +8,7 @@
    * [关于 Docker 更好的安装方式](problem/newAptAndYumRepos.md) 
    * [Docker 无法在 Fedora 22 上正常启动](problem/dockerInFedora22.md)
 * [Python 篇](python/README.md)
+   * [string 和 repr](python/stringVSrepr.md)
 * [Big Data](Big Data/README.md)
    * [资源](Big Data/resources.md)
 * [Docker 篇](docker/README.md)
