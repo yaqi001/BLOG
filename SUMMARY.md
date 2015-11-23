@@ -20,6 +20,6 @@
 * [存储](storage/README.md)
    * [Ceph](storage/Ceph.md)
       * [oVirt 与 Cinder 整合](storage/oVirtWithCeph.md)
-* [生活](lift/README.md)
-
+* [生活](life/README.md)
+   * [计划](life/plan.md)
 
