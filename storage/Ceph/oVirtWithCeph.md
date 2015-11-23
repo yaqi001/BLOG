@@ -45,12 +45,12 @@
 
 操作系统： CentOS 7
 
-| **node 名称** | **IP 地址** |
-| ------------- | ----------- |
-| ceph-deploy-admin-node | 192.168.9.59 |
-| ceph-node1 | 192.168.9.58 |
-| ceph-node2 | 192.168.9.57 |
-| ceph-node3 | 192.168.9.55 |
+| **node 名称** | **IP 地址** | **作用** |
+| ------------- | ----------- | -------- |
+| ceph-deploy-admin-node | 192.168.9.59 | 管理其它 Ceph 节点的 node |
+| ceph-node1 | 192.168.9.58 | 管理 Ceph Storage cluster |
+| ceph-node2 | 192.168.9.57 | 管理 Ceph Storage cluster |
+| ceph-node3 | 192.168.9.55 | 管理 Ceph Storage cluster |
 
 ##### Ceph 部署安装
 
@@ -123,19 +123,19 @@
     
    最新的 `ceph-deply` 的版本支持 `--username` 选项，所以你完全可以通过指定某个具有无密码 **sudo** 权限的用户（包括 root 用户，即便我们并不支持这么做）对其它 `ceph-node` 进行操作。建议在所有 `ceph-node` 上都创建该用户，这样一来就方便多了，但是最好不要用 `ceph` 作为你指定的用户名称。
 
-   i. 在每个 ceph 节点上都创建一个新用户：
+   1. 在每个 ceph 节点上都创建一个新用户：
       我新创建的用户名是 `Ceph`
       ~~~ bash
       $ sudo useradd -d /home/Ceph -m Ceph
       $ sudo passwd Ceph
       ~~~
    
-   ii. 为所有 ceph 节点上的新用户添加 `sudo` 权限： 
+   2. 为所有 ceph 节点上的新用户添加 `sudo` 权限： 
 
-       ~~~ bash
-       $ echo "Ceph ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/Ceph
-       $ sudo chmod 0440 /etc/sudoers.d/Ceph
-       ~~~
+      ~~~ bash
+      $ echo "Ceph ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/Ceph
+      $ sudo chmod 0440 /etc/sudoers.d/Ceph
+      ~~~
   
 4. 开启无密码 SSH
    
@@ -187,7 +187,55 @@
       ssh-copy-id Ceph@ceph-node3
       ~~~
 
-#### Step 2: 存储集群
+5. 开机时启动网络
+  
+   Ceph OSD 是相互对等的，且它们都通过网络向 Ceph Monitors 进行报告。如果默认情况下网络是关闭的状态，那么 Ceph Cluster 是不能够进行网络通信的。
+
+   CentOS 7 默认的网络接口中配置的网络默认情况下是关闭的。您可以在 `/etc/sysconfig/network-scripts` 目录下的 `/etc/ifcfg-eth0` （eth0 是我的网卡名称）文件中将 `ONBOOT` 设置为 `yes`。
+
+6. 确保连接性
+ 
+   使用 ping 某台机器 IP 或主机名的方式来检测机器是否已经连网。如果用的是主机名，不要忘记配置本地 DNS。
+
+7. 打开所需的端口
+
+   | **服务** | **默认端口** |
+   | -------- | ------------ |
+   | Ceph Monitor | 6789 |
+   | Ceph OSD | 6800 ～ 7300 |
+
+   Ceph OSD 可以使用多个网络连接来和客户端，Ceph Monitor，用于复制的 OSD，以及用于监控的心跳 OSD。
+   
+   1. 首先确保 `firewalld` 已经打开：
+      ~~~ bash
+      systemctl start firewalld
+      systemctl enable firewalld
+      ~~~       
+
+   2. CentOS 7 默认的 `firewall` 配置相对严格。如若想要在 Ceph 客户端上与 Ceph node 进行通信，你必须调整 firewall 的设置。
+      ~~~ bash
+      $ sudo firewall-cmd --zone=public --add-port=6789/tcp --permanent
+      success
+      $ sudo firewall-cmd --zone=public --add-port=6800:7300/tcp --permanent 
+      success
+      ~~~
+   
+8. 关闭 `SELINUX`：
+   
+   为了简化安装，我们建议您设置 `SELINUX` 的权限或者直接关掉它。在关闭 `SELINUX` 之前，请确保 node 是可以正常使用的。
+   ~~~ bash
+   sudo setenforce 0
+   ~~~
+
+9. 设置调用源时的优先级： 
+
+   1. 确保你的包管理器有安装好的优先级包。CentOS 中还需要安装 EPEL。
+      ~~~ bash
+      sudo yum -y install yum-plugin-priorities
+      sudo yum -y install epel
+      ~~~
+#### Step 2: 配置存储集群
+利用 ceph-deploy 工具在 ceph-deploy-admin-node 上设置 Ceph Storage Cluster。
 
 ##### 创建一个集群
 ##### 操作集群
