@@ -132,8 +132,8 @@
    
    ii. 为所有 ceph 节点上的新用户添加 `sudo` 权限： 
        ~~~ bash
-       echo "Ceph ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/Ceph
-       sudo chmod 0440 /etc/sudoers.d/Ceph
+       $ echo "Ceph ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/Ceph
+       $ sudo chmod 0440 /etc/sudoers.d/Ceph
        ~~~
   
 4. 开启无密码 SSH
