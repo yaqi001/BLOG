@@ -1,5 +1,20 @@
 # 在 oVirt 中整合 Cinder
 
+**目录：**
+   
+- [安装](#installation)
+   - [准备](#preflight)
+      - [配置 Ceph Deploy](#CephDeploySetup)
+      - [配置 Ceph 节点](#CephNodeSetup)
+   - [存储集群之快速入门](#StorageClusterQuickStart)
+      - [创建集群](#CreateCluster)
+      - [操作集群](#OperatingCluster)
+      - [扩展集群](#ExpandingCluster)
+      - [存储/获取对象数据](#StoringRetrievingObjectData)
+   - [块设备之快速入门](#BlockDeviceQuickStart)
+      - [安装 Ceph](#CephInstallation)
+      - [配置块设备](#ConfigureABlockDevice)
+
 对于 OpenStack 了解甚少，刚开始看 Cinder 和 Ceph，真的是一头雾水。那么，就从官文看起吧！
 
 ## 先说说 Ceph
@@ -39,9 +54,9 @@
 * [data consistency](http://recoveryspecialties.com/dc01.html)：指的是数据的可用性，在单一的环境中它被认为是理所当然存在的。一般在单一环境中进行数据备份（生产数据的副本用在原始数据领域中的时候）的时候会发生 data consistency。
 * []
 
-### 安装
+<h2 id="installation">安装</h2>
 
-#### Step 1: 准备
+<h3 id="preflight">准备</h3>
 
 操作系统： CentOS 7
 
@@ -52,7 +67,7 @@
 | ceph-node2 | 192.168.9.57 | 管理 Ceph Storage cluster |
 | ceph-node3 | 192.168.9.55 | 管理 Ceph Storage cluster |
 
-##### Ceph 部署安装
+<h4 id="startInstall">配置 Ceph Deploy</h4>
 
 1. 在 `ceph-deploy` 中添加 Ceph 仓库：
    ~~~ bash 
@@ -103,7 +118,7 @@
    $ sudo yum -y install ceph-deploy
    ~~~ 
    
-##### Ceph Node 安装
+<h4 id="CephNodeSetup">配置 Ceph 节点</h4>
 
 1. 安装 NTP（Network Time Protocol）
    
@@ -245,20 +260,21 @@
       sudo yum -y install epel
       ~~~
 
-#### Step 2: 配置存储集群
+<h3 id='StorageClusterQuickStart'>存储集群之快速入门</h3>
+
 这里我们利用 ceph-deploy-admin-node 上的 `ceph-deploy` 来设置 Ceph Storage Cluster。创建一个具有三个节点的集群之后你就可以继续挖掘 Ceph 的功能了。创建一个 Ceph Monitor * 1 + Ceph OSD Daemon * 2 的集群。一旦 cluster 达到了 `active + clean` 的状态后，就可以通过添加第三个 OSD，添加 MDS 或者添加至少两个的 Ceph Monitor 来扩展它了^.^。
 
-1. 最好在管理节点上创建一个新的目录来保存 `ceph-deploy` 为集群生成的配置文件和 keys。
-   ~~~ bash
-   $ mkdir my-cluster
-   $ cd my-cluster/
-   ~~~
-  
-   > **注意**：`ceph-deploy` 工具会将输出目录存放至 `my-cluster` 目录中，所以你需要在该目录下执行 `ceph-deploy` 命令。
+> **提示**：最好在管理节点上创建一个新的目录来保存 `ceph-deploy` 为集群生成的配置文件和 keys。
+> ~~~ bash
+  $ mkdir my-cluster
+  $ cd my-cluster/
+  ~~~
+>  
+> **注意**：`ceph-deploy` 工具会将输出目录存放至 `my-cluster` 目录中，所以你需要在该目录下执行 `ceph-deploy` 命令。
 
-2. 创建集群
+<h4 id='CreateCluster'>创建集群</h4>
 
-   如果你的操作对集群造成了不可挽回的损毁，你想要重新来一遍怎么办呢？执行下面的命令来清理你的配置信息：
+1. 如果你的操作对集群造成了不可挽回的损毁，你想要重新来一遍怎么办呢？执行下面的命令来清理你的配置信息：
    ~~~ bash
    # {ceph-node} 用于替换非管理节点的主机名
    $ ceph-deploy purgedata {ceph-node} [{ceph-node}]
@@ -274,38 +290,92 @@
 
    在管理节点的新创建的 `my-cluster` 目录下利用 `ceph-deploy` 工具执行如下操作：
   
-   1. 开始部署新的集群，并为其生成集群配置文件和 keyring
+2. 开始部署新的集群，并为其生成集群配置文件和 keyring
+   ~~~ bash
+   # 初始化作为监控节点的 ceph-node1
+   [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy new ceph-node1
+   ~~~
+   
+   这时你可以看到 `my-cluster` 中出现了三个新的文件
+   ~~~ bash
+   [Ceph@ceph-deploy-admin-node my-cluster]$ ll
+   总用量 16
+   -rw-rw-r--. 1 Ceph Ceph  232 11月 24 11:30 ceph.conf # Ceph 的配置文件
+   -rw-rw-r--. 1 Ceph Ceph 6741 11月 24 11:30 ceph.log # 新集群的日志文件
+   -rw-------. 1 Ceph Ceph   73 11月 24 11:30 ceph.mon.keyring # 监控节点的秘密密钥
+   ~~~
+
+3. Ceph 配置文件中默认的 OSD 的数量是 3，我们需要把它改成 2，才能达到在只有两个 Ceph OSD 的情况下保持 `active + clean` 的状态。将下面一行添加到 `[global]` 部分中。
+   ~~~ bash
+   osd pool default size = 2
+   ~~~
+
+4. 安装 Ceph
+   ~~~ bash
+   $ ceph-deploy install ceph-deploy-admin-node ceph-node1 ceph-node2 ceph-node3
+   ~~~
+   `ceph-deploy` 工具将会在每个 Ceph 节点上安装 Ceph。
+   > **注意**：如果你执行了 `ceph-deploy purge` 这个命令，你必须重新执行该指令以重装 `Ceph`。
+
+5. 添加初始化的监控节点，并生成密钥
+   ~~~ bash
+   [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy mon create-initial
+   ~~~
+   
+   以上命令完成后，你会发现 `my-cluster` 目录下多了几个 key 文件出来：
+   ~~~ bash
+   总用量 220
+   -rw-------. 1 Ceph Ceph     71 11月 24 15:29 ceph.bootstrap-mds.keyring
+   -rw-------. 1 Ceph Ceph     71 11月 24 15:29 ceph.bootstrap-osd.keyring
+   -rw-------. 1 Ceph Ceph     71 11月 24 15:29 ceph.bootstrap-rgw.keyring # 只有集群是 Hammer 或以上版本的时候才会有 bootstrap-rgw keyring
+   -rw-------. 1 Ceph Ceph     63 11月 24 15:29 ceph.client.admin.keyring
+   -rw-rw-r--. 1 Ceph Ceph    257 11月 24 11:57 ceph.conf
+   -rw-rw-r--. 1 Ceph Ceph 154469 11月 24 15:34 ceph.log
+   -rw-------. 1 Ceph Ceph     73 11月 24 11:30 ceph.mon.keyring
+   ~~~
+
+6. 添加两个 OSD
+    
+   1. 如果想要快速配置，就不必使用 Ceph OSD 的整个磁盘了，只用一个目录即可。登录到 Ceph 的 OSD 节点并为 OSD 后台程序创建一个目录。
       ~~~ bash
-      # 初始化作为监控节点的 ceph-node1
-      [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy new ceph-node1
+      [Ceph@ceph-node2 ~]$ sudo mkdir /var/local/osd0
+      [Ceph@ceph-node3 ~]$ sudo mkdir /var/local/osd1
       ~~~
-      
-      这时你可以看到 `my-cluster` 中出现了三个新的文件
+
+   2. 使用 Ceph 管理节点上的 `ceph-deploy` 添加两个 OSD
       ~~~ bash
-      [Ceph@ceph-deploy-admin-node my-cluster]$ ll
-      总用量 16
-      -rw-rw-r--. 1 Ceph Ceph  232 11月 24 11:30 ceph.conf # Ceph 的配置文件
-      -rw-rw-r--. 1 Ceph Ceph 6741 11月 24 11:30 ceph.log # 新集群的日志文件
-      -rw-------. 1 Ceph Ceph   73 11月 24 11:30 ceph.mon.keyring # 监控节点的秘密密钥
+      [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy osd prepare ceph-node2:/var/local/osd0 ceph-node3:/var/local/osd1
+      ~~~
+ 
+   3. 激活 OSD
+      ~~~ bash
+      [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy osd activate ceph-node2:/var/local/osd0 ceph-node3:/var/local/osd1
       ~~~
   
-   2. Ceph 配置文件中默认的 OSD 的数量是 3，我们需要把它改成 2，才能达到在只有两个 Ceph OSD 的情况下保持 `active + clean` 的状态。将下面一行添加到 `[global]` 部分中。
+   4. 利用 `ceph-deploy` 工具将配置文件和 admin 密钥拷贝到你的 Ceph 管理节点（ceph-deploy-admin-node）& Ceph 非管理节点（ceph-node1, ceph-node2, ceph-node3）上，这样一来，当你使用 ceph 客户端执行某条指令的时候就无需指定监控节点地址和 `ceph.client.admin.keyring` 了。
+
       ~~~ bash
-      osd pool default size = 2
+      [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy admin ceph-deploy-admin-node ceph-node1 ceph-node2 ceph-node3
       ~~~
 
-   3. 安装 Ceph
+      > **注意**：不要忘记在 Ceph 管理节点中的 `/etc/hosts/` 目录中配置本机域名。
+ 
+   5. 为每个节点中的 `ceph.client.admin.keyring` 文件添加可读权限
       ~~~ bash
-      $ ceph-deploy install ceph-deploy-admin-node ceph-node1 ceph-node2 ceph-node3
+      $ sudo chmod +r /etc/ceph/ceph.client.admin.keyring
       ~~~
-      `ceph-deploy` 工具将会在每个 Ceph 节点上安装 Ceph。
-      > **注意**：如果你执行了 `ceph-deploy purge` 这个命令，你必须重新执行该指令以重装 `Ceph`。
+   
+   6. 测试集群是否创建成功
+      ~~~ bash
+      $ ceph health
+      ~~~
 
-   4. 添加初始化的监控节点
+      **Your cluster should return an active + clean state when it has finished peering.**
 
-##### 创建一个集群
-##### 操作集群
-##### 扩展集群
-##### 存储/获取对象数据
-#### Step 3: Ceph 客户端
+<h4 id='OperatingCluster'>操作集群</h4>
+<h4 id='ExpandingCluster'>扩展集群</h4>
+<h4 id='StoringRetrievingObjectData'>存储/获取对象数据</h4>
+<h3 id='BlockDeviceQuickStart'>块设备之快速入门</h3>
+<h4 id='CephInstallation'>安装 Ceph</h4>
+<h4 id='ConfigureABlockDevice'>配置块设备</h4>
 
