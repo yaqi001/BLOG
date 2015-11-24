@@ -59,7 +59,7 @@
    # cat >/etc/yum.repos.d/ceph.repo <<EOF
    > [ceph-noarch]
    > name=Ceph noarch packages
-   > baseurl=http://download.ceph.com/rpm-firefly/el7/noarch
+   > baseurl=http://download.ceph.com/rpm-hammer/el7/noarch
    > enabled=1
    > gpgcheck=1
    > type=rpm-md
@@ -68,7 +68,7 @@
    ~~~   
    
    > **提示：**<br/>
-   > * `firefly` 是 Ceph 的版本名称，你可以修改为最近主要的版本名称，Ceph 的版本信息：[http://ceph.com/category/releases/](http://ceph.com/category/releases/)。
+   > * `hammer` 是 Ceph 的版本名称，你可以修改为最近主要的版本名称，需要注意的是版本名称应该写成小些形式。Ceph 的版本信息：[http://ceph.com/category/releases/](http://ceph.com/category/releases/)。
    > * `el7` 指的是我使用的 Linux 发行版。对应关系如下：
      <table>
         <tr>
@@ -198,11 +198,21 @@
    使用 ping 某台机器 IP 或主机名的方式来检测机器是否已经连网。如果用的是主机名，不要忘记配置本地 DNS。
 
 7. 打开所需的端口
-
-   | **服务** | **默认端口** |
-   | -------- | ------------ |
-   | Ceph Monitor | 6789 |
-   | Ceph OSD | 6800 ～ 7300 |
+   
+   <table>
+        <tr>
+           <td>服务</td>
+           <td>默认端口</td>
+        </tr>
+        <tr>
+           <td>Ceph Monitor</td>
+           <td>6789</td>
+        </tr>
+        <tr>
+           <td>Ceph OSD</td>
+           <td>6800:7300</td>
+        </tr>
+   </table>
 
    Ceph OSD 可以使用多个网络连接来和客户端，Ceph Monitor，用于复制的 OSD，以及用于监控的心跳 OSD。
    
@@ -234,8 +244,64 @@
       sudo yum -y install yum-plugin-priorities
       sudo yum -y install epel
       ~~~
+
 #### Step 2: 配置存储集群
-利用 ceph-deploy 工具在 ceph-deploy-admin-node 上设置 Ceph Storage Cluster。
+这里我们利用 ceph-deploy-admin-node 上的 `ceph-deploy` 来设置 Ceph Storage Cluster。创建一个具有三个节点的集群之后你就可以继续挖掘 Ceph 的功能了。创建一个 Ceph Monitor * 1 + Ceph OSD Daemon * 2 的集群。一旦 cluster 达到了 `active + clean` 的状态后，就可以通过添加第三个 OSD，添加 MDS 或者添加至少两个的 Ceph Monitor 来扩展它了^.^。
+
+1. 最好在管理节点上创建一个新的目录来保存 `ceph-deploy` 为集群生成的配置文件和 keys。
+   ~~~ bash
+   $ mkdir my-cluster
+   $ cd my-cluster/
+   ~~~
+  
+   > **注意**：`ceph-deploy` 工具会将输出目录存放至 `my-cluster` 目录中，所以你需要在该目录下执行 `ceph-deploy` 命令。
+
+2. 创建集群
+
+   如果你的操作对集群造成了不可挽回的损毁，你想要重新来一遍怎么办呢？执行下面的命令来清理你的配置信息：
+   ~~~ bash
+   # {ceph-node} 用于替换非管理节点的主机名
+   $ ceph-deploy purgedata {ceph-node} [{ceph-node}]
+   $ ceph-deploy forgetkeys
+   ~~~
+   
+   想要清理 Ceph 包，请执行如下操作：
+   ~~~ bash
+   $ ceph-deploy purge {ceph-node} [{ceph-node}]
+   ~~~
+ 
+   > **注意**：执行了 `purge` 之后，你必须要再安装一遍 `Ceph`。
+
+   在管理节点的新创建的 `my-cluster` 目录下利用 `ceph-deploy` 工具执行如下操作：
+  
+   1. 开始部署新的集群，并为其生成集群配置文件和 keyring
+      ~~~ bash
+      # 初始化作为监控节点的 ceph-node1
+      [Ceph@ceph-deploy-admin-node my-cluster]$ ceph-deploy new ceph-node1
+      ~~~
+      
+      这时你可以看到 `my-cluster` 中出现了三个新的文件
+      ~~~ bash
+      [Ceph@ceph-deploy-admin-node my-cluster]$ ll
+      总用量 16
+      -rw-rw-r--. 1 Ceph Ceph  232 11月 24 11:30 ceph.conf # Ceph 的配置文件
+      -rw-rw-r--. 1 Ceph Ceph 6741 11月 24 11:30 ceph.log # 新集群的日志文件
+      -rw-------. 1 Ceph Ceph   73 11月 24 11:30 ceph.mon.keyring # 监控节点的秘密密钥
+      ~~~
+  
+   2. Ceph 配置文件中默认的 OSD 的数量是 3，我们需要把它改成 2，才能达到在只有两个 Ceph OSD 的情况下保持 `active + clean` 的状态。将下面一行添加到 `[global]` 部分中。
+      ~~~ bash
+      osd pool default size = 2
+      ~~~
+
+   3. 安装 Ceph
+      ~~~ bash
+      $ ceph-deploy install ceph-deploy-admin-node ceph-node1 ceph-node2 ceph-node3
+      ~~~
+      `ceph-deploy` 工具将会在每个 Ceph 节点上安装 Ceph。
+      > **注意**：如果你执行了 `ceph-deploy purge` 这个命令，你必须重新执行该指令以重装 `Ceph`。
+
+   4. 添加初始化的监控节点
 
 ##### 创建一个集群
 ##### 操作集群
