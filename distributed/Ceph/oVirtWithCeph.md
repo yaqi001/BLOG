@@ -241,7 +241,7 @@
       ~~~ bash
       $ sudo firewall-cmd --zone=public --add-port=6789/tcp --permanent
       success
-      $ sudo firewall-cmd --zone=public --add-port=6800:7300/tcp --permanent 
+      $ sudo firewall-cmd --zone=public --add-port=6800-7300/tcp --permanent 
       success
       ~~~
    
@@ -373,6 +373,10 @@
       **Your cluster should return an active + clean state when it has finished peering.**
 
 <h4 id='OperatingCluster'>操作集群</h4>
+   
+   1. 操作集群的后台程序（OSD）：
+   2. 监控 Ceph 集群：
+   3. 
 <h4 id='ExpandingCluster'>扩展集群</h4>
 <h4 id='StoringRetrievingObjectData'>存储/获取对象数据</h4>
 <h3 id='BlockDeviceQuickStart'>块设备之快速入门</h3>
