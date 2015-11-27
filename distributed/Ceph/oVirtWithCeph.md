@@ -202,6 +202,8 @@
       ssh-copy-id Ceph@ceph-node3
       ~~~
 
+      > **注意：**：由于后面会用到 ceph 客户端，所以最好在 ceph-node1, ceph-node2, ceph-node3 之间也实现无密码登录，重复上面的步骤既可。
+
 5. 开机时启动网络
   
    Ceph OSD 是相互对等的，且它们都通过网络向 Ceph Monitors 进行报告。如果默认情况下网络是关闭的状态，那么 Ceph Cluster 是不能够进行网络通信的。
@@ -375,6 +377,113 @@
 <h4 id='OperatingCluster'>操作集群</h4>
    
    1. 操作集群的后台程序（OSD）：
+      1. 开启所有的后台程序
+         通过执行 ceph start 命令开启 Ceph 集群：
+         ~~~ bash
+         sudo /etc/init.d/ceph -a start
+         [Ceph@ceph-deploy-admin-node my-cluster]$ sudo /etc/init.d/ceph -a start
+         === osd.0 === 
+         root@ceph-node2's password: 
+         root@ceph-node2's password: 
+         Starting Ceph osd.0 on ceph-node2...already running
+         === osd.1 === 
+         root@ceph-node3's password: 
+         root@ceph-node3's password: 
+         df: "/var/lib/ceph/osd/ceph-1/.": 没有那个文件或目录
+         root@ceph-node3's password: 
+         create-or-move updated item name 'osd.1' weight 1 at location {host=ceph-deploy-admin-node,root=default} to crush map
+         Starting Ceph osd.1 on ceph-node3...
+         root@ceph-node3's password: 
+         Running as unit run-19894.service.
+         ~~~
+         
+         `-a` 意味着对所有节点执行这条指令。
+      
+         > **提醒**：如果你不想每次都输入密码，请使用 SSH 无密码登录的方式：
+                     ~~~ bash
+                     sudo ssh-keygen
+                     sudo ssh-copy-id -i /root/.ssh/id_rsa.pub root@ceph-node1
+                     sudo ssh-copy-id -i /root/.ssh/id_rsa.pub root@ceph-node2
+                     sudo ssh-copy-id -i /root/.ssh/id_rsa.pub root@ceph-node1
+                     ~~~
+
+      2. 开启不同类型的后台程序：
+         * 想在本地 Ceph 节点开启同一类型的后台程序：
+           例如 `ceph-node3` 上只运行了 osd.1：
+           ~~~ bash
+           === osd.1 === 
+           create-or-move updated item name 'osd.1' weight 0.03 at location {host=ceph-node3,root=default} to crush map
+           Starting Ceph osd.1 on ceph-node3...
+           Running as unit run-22695.service.
+           === osd.1 === 
+           Starting Ceph osd.1 on ceph-node3...already running
+           ~~~
+ 
+         * 想在异地 Ceph 节点开启同一类型的后台程序：
+           例如 `ceph-node2` 运行了 osd.0，`ceph-node3` 上运行了 osd.1：
+           ~~~ bash
+           === osd.1 === 
+           create-or-move updated item name 'osd.1' weight 0.03 at location {host=ceph-node3,root=default} to crush map
+           Starting Ceph osd.1 on ceph-node3...
+           Running as unit run-23366.service.
+           === osd.0 === 
+           Starting Ceph osd.0 on ceph-node2...already running
+           === osd.1 === 
+           Starting Ceph osd.1 on ceph-node3...already running
+           ~~~
+
+      3. 关闭不同类型的后台程序：
+         * 想在本地 Ceph 节点关闭同一类型的后台程序： 
+           例如 `ceph-node1` 上运行的是 mon：
+           ~~~ bash
+           === mon.ceph-node1 === 
+           Stopping Ceph mon.ceph-node1 on ceph-node1...kill 13239...done
+           ~~~
+
+         * 想在异地 Ceph 节点关闭同一类型的后台程序：
+           例如在 `ceph-node3` 上关闭 `ceph-node1` 上的 mon 程序：
+           ~~~ bash
+           [Ceph@ceph-node3 ~]$ sudo /etc/init.d/ceph -a stop mon
+           === mon.ceph-node1 === 
+           Stopping Ceph mon.ceph-node1 on ceph-node1...kill 17739...done
+           ~~~
+
+      4. 开启具体的后台程序：
+         * 开启本地节点上具体的某个 Ceph 后台程序
+           例如在 `ceph-node1` 上开启 mon：
+           ~~~ bash
+           [Ceph@ceph-node1 ~]$ sudo /etc/init.d/ceph start mon.ceph-node1
+           === mon.ceph-node1 === 
+           Starting Ceph mon.ceph-node1 on ceph-node1...
+           Running as unit run-18285.service.
+           Starting ceph-create-keys on ceph-node1...
+           ~~~
+
+        * 在异地节点开启具体的某个 Ceph 后台程序
+          例如在 `ceph-node1` 上开启 `ceph-node2` 上的 osd.0 程序：
+          ~~~ bash
+          [Ceph@ceph-node1 ~]$ sudo /etc/init.d/ceph -a start osd.0
+          === osd.0 === 
+          Starting Ceph osd.0 on ceph-node2...already running
+          ~~~
+          
+      5. 关闭具体的后台程序：
+         * 关闭本地节点上具体的某个 Ceph 后台程序
+           例如在 `ceph-node1` 上关闭 mon：     
+           ~~~ bash
+           [Ceph@ceph-node1 ~]$ sudo /etc/init.d/ceph stop mon.ceph-node1
+           === mon.ceph-node1 === 
+           Stopping Ceph mon.ceph-node1 on ceph-node1...kill 18289...done
+           ~~~
+   
+         * 在异地节点关闭具体的某个 Ceph 后台程序
+           例如在 `ceph-node1` 上关闭 `ceph-node2` 上的 osd.0 程序：
+           ~~~ bash
+           [Ceph@ceph-node1 ~]$ sudo /etc/init.d/ceph -a stop osd.0
+           === osd.0 === 
+           Stopping Ceph osd.0 on ceph-node2...kill 16701...kill 16701...done
+           ~~~
+ 
    2. 监控 Ceph 集群：
    3. 
 <h4 id='ExpandingCluster'>扩展集群</h4>
