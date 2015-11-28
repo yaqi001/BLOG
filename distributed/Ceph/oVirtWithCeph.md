@@ -483,8 +483,20 @@
            === osd.0 === 
            Stopping Ceph osd.0 on ceph-node2...kill 16701...kill 16701...done
            ~~~
+      6. ceph 作为一个服务来运行：
  
    2. 监控 Ceph 集群：
+      1. 交互模式：
+      2. 检查集群的健康状态：
+      3. 观察集群：
+      4. 观察集群的使用情况：
+      5. 检查集群的状态：
+      6. 检查集群的状态：
+      7. 查看监控器的状态：
+      8. 查看 MDS 的状态：
+      9. 检查 placement group（放置组？）的状态：
+      10. 是用 admin 套接字：
+
    3. 
 <h4 id='ExpandingCluster'>扩展集群</h4>
 <h4 id='StoringRetrievingObjectData'>存储/获取对象数据</h4>
