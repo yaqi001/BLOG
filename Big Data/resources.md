@@ -7,3 +7,4 @@
 * [开发者可能会用到的资源](http://www.ibmbigdatahub.com/developers)
 * [大数据分析，还有云计算什么的](https://www.ibm.com/developerworks/)。
 * [啥也不说了](http://www.datasciencecentral.com/)
+* [如果你的数学过关了](http://cs109.github.io/2015/)
