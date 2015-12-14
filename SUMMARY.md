@@ -24,4 +24,4 @@
 * [生活](life/README.md)
    * [计划](life/plan.md)
    * [书籍](https://yingyun001.gitbooks.io/book/content/)
-
+   * [想](life/think.md)
