@@ -23,6 +23,7 @@
       * [oVirt 与 Cinder 整合](distributed/Ceph/oVirtWithCeph.md)
 * [生活](life/README.md)
    * [计划](life/plan.md)
+   * [书籍](www.baidu.com)
    * [书籍](https://yaqi001.gitbooks.io/book/content/)
    * [妙](life/goodStuff.md)
    * [想](life/think.md)
