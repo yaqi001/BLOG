@@ -25,3 +25,4 @@
    * [计划](life/plan.md)
    * [书籍](https://yingyun001.gitbooks.io/book/content/)
    * [妙](life/goodStuff.md)
+   * [想](life/think.md)
