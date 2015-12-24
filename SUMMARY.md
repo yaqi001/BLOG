@@ -26,3 +26,4 @@
    * [书籍](https://yaqi001.gitbooks.io/book/content/)
    * [妙](life/goodStuff.md)
    * [想](life/think.md)
+   * [电影](life/movie.md)
