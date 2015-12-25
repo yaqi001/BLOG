@@ -8,3 +8,5 @@
      * [Prerequisites for Learning Hadoop](http://saphanatutorial.com/prerequisites-for-learning-hadoop/)
      * [Hadoop and Java – The Most In-demand Skill in IT](http://saphanatutorial.com/hadoop-and-java-prerequisites-tutorial-and-examples/)
    * 程序运行可视化：[http://pythontutor.com/](http://pythontutor.com/)
+   
+   * 唉～考研的时候要是就知道这个网站该有多好！.！[math](http://www.wolframalpha.com/)
