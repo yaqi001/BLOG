@@ -9,6 +9,7 @@
    * [Docker 无法在 Fedora 22 上正常启动](problem/dockerInFedora22.md)
 * [Python 篇](python/README.md)
    * [string 和 repr](python/stringVSrepr.md)
+   * [matplotlib 中文显示问题](python/matplotlib 中文显示问题.md)
 * [Big Data](Big Data/README.md)
    * [资源](Big Data/resources.md)
 * [Docker 篇](docker/README.md)
