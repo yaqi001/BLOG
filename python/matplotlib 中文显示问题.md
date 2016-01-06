@@ -47,3 +47,8 @@ BTW，我使用的 linux 发行版是 Fedora 22。
 6. **删除 `~/.cache/matplotlib` 目录下的两个文件，然后重新执行你的代码**
 
 我想应该成功了吧，如果没有成功，请将你的详细情况告知于我，我的邮箱是：zhangyingyun001@gmail.com
+
+参考文章:
+[http://www.cnblogs.com/skabyy/p/3461229.html](http://www.cnblogs.com/skabyy/p/3461229.html)
+[http://blog.sciencenet.cn/blog-43412-343002.html](http://blog.sciencenet.cn/blog-43412-343002.html)
+[http://www.jinbuguo.com/gui/linux_fontconfig.html](http://www.jinbuguo.com/gui/linux_fontconfig.html)
