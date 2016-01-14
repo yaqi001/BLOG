@@ -35,7 +35,7 @@ BTW，我使用的 linux 发行版是 Fedora 22。
 
 4. **有衬字体 & 无衬字体**
 
-   根据相关资料的查询，我了解到 WenQuanYi Zen Hei 是 sans-serif（无衬字体）。serif 是有衬字体。所以，当你下载了自己喜欢的字体后，应该先查询以下它究竟是有衬还是无衬，因为这一点浪费了我好多时间啊！！！
+   根据相关资料的查询，我了解到 WenQuanYi Zen Hei 是 sans-serif（无衬字体）。serif 是有衬字体。所以，当你下载了自己喜欢的字体后，应该先查询一下它究竟是有衬还是无衬，因为这一点浪费了我好多时间啊！！！
 
 5. **修改 matplotlibrc 文件**
 
@@ -43,6 +43,7 @@ BTW，我使用的 linux 发行版是 Fedora 22。
    ~~~ bash
    font.family   : sans-serif   # 也就是去掉了注释符号而已，如果你下载的字体是有衬字体，这里要填写 serif
    font.sans-serif    : WenQuanYi Zen Hei, Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif   # 同样，这里也是去掉注释符号，但是如果你下载的字体是有衬字体，就要将 font.serif 的注释去掉，而不是现在这个，然后在添加上 WenQuanYi Zen Hei。
+   ~~~
 
 6. **删除 `~/.cache/matplotlib` 目录下的两个文件，然后重新执行你的代码**
 
