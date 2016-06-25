@@ -12,6 +12,8 @@
    * [matplotlib 中文显示问题](python/matplotlib 中文显示问题.md)
 * [Big Data](Big Data/README.md)
    * [资源](Big Data/resources.md)
+* [JAVA](JAVA/README.md)
+   * [个人笔记](https://yingyun001.gitbooks.io/java/content/variate.html)
 * [Docker 篇](docker/README.md)
    * [官文翻译](https://yaqi001.gitbooks.io/docker_translation/content/)
 * [Ansible 篇](ansible/README.md)
